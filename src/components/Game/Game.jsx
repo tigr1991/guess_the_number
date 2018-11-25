@@ -12,7 +12,7 @@ export default class Game extends Component {
     countAttempts = 7
     minNumber = 1
     maxNumber = 100
-    initText = "Отгадай число от " + this.minNumber + " до " + this.maxNumber + " за " + this.countAttempts + " попыток"
+    initText = "Всего три раунда. Выйграй хотя бы два, отгадав число от " + this.minNumber + " до " + this.maxNumber + " за " + this.countAttempts + " попыток"
 
     state = {
         text: this.initText,
@@ -26,11 +26,17 @@ export default class Game extends Component {
     }
 
     handleCheckClick = () =>  {
-        const countAttempts = ++this.state.countAttempts
-        const leftAttempts = this.countAttempts - this.state.countAttempts
-        let currentRoundStatus = 0
+        let countAttempts = ++this.state.countAttempts
+        let leftAttempts = this.countAttempts - this.state.countAttempts
+        let countWins = this.state.countWins
+        let numberRound = this.state.numberRound
         if (this.state.inputValue == this.state.secretNumber) {
-            currentRoundStatus = 1
+            countWins++
+            this.setState({
+                countWins,
+            })
+            this.startNewRound()
+            return;
         } else {
             if (this.state.inputValue < this.state.secretNumber) {
                 this.state.text = "Больше ↑"
@@ -38,13 +44,32 @@ export default class Game extends Component {
                 this.state.text = "Меньше ↓"
             }
             if (leftAttempts === 0) {
-                currentRoundStatus = -1
+                this.startNewRound()
+                return;
             }
         }
         this.setState({
             countAttempts,
             leftAttempts,
-            currentRoundStatus,
+            countWins,
+            numberRound,
+            inputValue: '',
+        })
+    }
+
+    startNewRound()
+    {
+        let numberRound = this.state.numberRound
+        numberRound++
+        const countAttempts = 0
+        const leftAttempts = this.countAttempts
+        const secretNumber = Math.round(Math.random() * this.maxNumber + this.minNumber);
+        return this.setState({
+            'text': this.initText,
+            secretNumber,
+            countAttempts,
+            leftAttempts,
+            numberRound,
             inputValue: '',
         })
     }
@@ -62,14 +87,14 @@ export default class Game extends Component {
     }
 
     render() {
-        if (this.state.currentRoundStatus === 1) {
+        if (this.state.countWins === 2) {
             return (
                 <div>
                     <Certificate> </Certificate>
                 </div>
             )
         }
-        if (this.state.currentRoundStatus === -1) {
+        if (this.state.numberRound - this.state.countWins > 2 || this.state.numberRound > 3) {
             return (
                 <div className={(styles.window)}>
                     <GameOver > </GameOver>
@@ -78,7 +103,11 @@ export default class Game extends Component {
         }
         return (
             <div className={(styles.window)}>
-                <Monitor text={this.state.text} leftAttempts={this.state.leftAttempts}> </Monitor>
+                <Monitor
+                    text={this.state.text}
+                    leftAttempts={this.state.leftAttempts}
+                    numberRound={this.state.numberRound}
+                > </Monitor>
                 <Input onChange={this.handleChange} onKeyPress={this.handleKeyPress.bind(this)} value={this.state.inputValue}/>
                 <Btn onClick={this.handleCheckClick}>Enter</Btn>
                 <Help secretNumber={this.state.secretNumber}> </Help>
